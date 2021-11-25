@@ -1,0 +1,147 @@
+// using System;
+
+// namespace MyCode4
+// {
+//     class Program
+//     {
+//         static void Main(string[] args)
+//         {
+//             Console.WriteLine("Hello World!");
+//         }
+//     }
+// }
+
+
+
+
+
+// using System;
+// using System.Net.Http;
+// using System.Net.Http.Headers;
+
+// var handler = new HttpClientHandler();
+// handler.ClientCertificateOptions = ClientCertificateOption.Manual;
+// handler.ServerCertificateCustomValidationCallback = 
+//     (httpRequestMessage, cert, cetChain, policyErrors) =>
+//  {   
+//   return true;
+//  };
+
+// using (var client = new HttpClient(handler))
+// {
+//     var html = await client.GetStringAsync("https://www.ithome.com.tw");
+//     Console.WriteLine("var");
+//     // Console.WriteLine(html);
+//     // Console.Write("請輸入PNR 網址:");
+//     // string PNRurl = Console.ReadLine();
+//     // Console.WriteLine(PNRurl);
+//     var request = new HttpRequestMessage
+//     {
+//         Method = HttpMethod.Post,
+//         RequestUri = new Uri("https://172.31.0.205:8443/web-services/rest/resource/Scope"),
+//         Headers =
+//         {
+//             { "user-agent", "vscode-restclient" },
+//             { "accept", "*/*" },
+//             // { "authorization", "Basic dXNlcjE6MTIzNDU=" },
+//              { "authorization", "Basic dXNlcjE6MTIzNDU=" },
+//         },
+
+//         Content = new StringContent("{\"name\": \"TestScope3\",\"subnet\": \"101.10.103.0/24\"}")
+//         {
+//             Headers =
+//             {
+//                 ContentType = new MediaTypeHeaderValue("application/json")
+//             }
+//         }
+
+
+//     };
+//     Console.Write(request);
+
+//     using (var response = await client.SendAsync(request))
+//     {
+//         response.EnsureSuccessStatusCode();
+//         // var body = await response.Content.ReadAsStringAsync();
+//         // Console.WriteLine(body);
+//         Console.Write(response.EnsureSuccessStatusCode());
+//     }
+// }
+
+
+
+
+
+using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+
+var handler = new HttpClientHandler();
+handler.ClientCertificateOptions = ClientCertificateOption.Manual;
+handler.ServerCertificateCustomValidationCallback = 
+    (httpRequestMessage, cert, cetChain, policyErrors) =>
+ {   
+  return true;
+ };
+
+
+using (var client = new HttpClient(handler))
+{
+    Console.Write("請輸入PNR 網址 :");
+    string IP = Console.ReadLine();
+    // string PNRurl = "https://172.31.0.205:8443/web-services/rest/resource/Scope";
+    // Console.WriteLine(PNRurl + "/web-services/rest/resource/ClientEntry" );
+    string PNRurl = IP + "/web-services/rest/resource/ClientEntry" ;
+    // Console.WriteLine(PNRurl + "/web-services/rest/resource/Scope" );
+    Console.Write("請輸入Client名稱 :");
+    string C1 = Console.ReadLine();
+    Console.Write("請輸入Client 保留IP :");
+    string ipaddress = Console.ReadLine();
+    // string CN = "{\"name\": \"TestScope3\",\"subnet\": \"101.10.103.0/24\"}";
+    //bellow is ok
+    // string CN = "{\"name\": \"Client1\",\"reservedAddresses\": {\"stringItem\" : \"7.7.7.7\"}}";
+    string CN = "{\"name\": \"" +C1+ "\",\"reservedAddresses\": {\"stringItem\" : \"" + ipaddress + "\"}}";
+
+    Console.WriteLine("CN :" + CN);
+    Console.Write("網頁登入帳號：");
+    var user = Console.ReadLine();
+    Console.Write("網頁登入密碼：");
+    var password = Console.ReadLine();
+    var base64String =Convert.ToBase64String( Encoding.ASCII.GetBytes($"{user}:{password}"));
+    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",base64String);
+
+
+    var request = new HttpRequestMessage
+    {
+        Method = HttpMethod.Post,
+        RequestUri = new Uri(PNRurl),
+        Headers =
+        {
+            { "user-agent", "vscode-restclient" },
+            { "accept", "*/*" },
+            // { "authorization", "Basic dXNlcjE6MTIzNDU=" },
+             { "authorization", "Basic dXNlcjE6MTIzNDU=" },
+        },
+
+        // Content = new StringContent("{\"name\": \"TestScope3\",\"subnet\": \"101.10.103.0/24\"}")
+        Content = new StringContent(CN)
+        {
+            Headers =
+            {
+                ContentType = new MediaTypeHeaderValue("application/json")
+            }
+        }
+
+
+    };
+    Console.Write(request);
+
+    using (var response = await client.SendAsync(request))
+    {
+        response.EnsureSuccessStatusCode();
+        // var body = await response.Content.ReadAsStringAsync();
+        // Console.WriteLine(body);
+        Console.Write(response.EnsureSuccessStatusCode());
+    }
+}
