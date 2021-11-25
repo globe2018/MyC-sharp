@@ -1,0 +1,120 @@
+using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+
+var handler = new HttpClientHandler();
+handler.ClientCertificateOptions = ClientCertificateOption.Manual;
+handler.ServerCertificateCustomValidationCallback = 
+    (httpRequestMessage, cert, cetChain, policyErrors) =>
+ {   
+  return true;
+ };
+
+using (var client = new HttpClient(handler))
+{
+
+    Console.Write("請輸入PNR 網址 :");
+    string IP = Console.ReadLine();
+    string PNRurl = IP + "/web-services/rest/resource/ClientEntry" ;
+    Console.Write("網頁登入帳號：");
+    var user = Console.ReadLine();
+    Console.Write("網頁登入密碼：");
+    var password = Console.ReadLine();
+    var base64String =Convert.ToBase64String( Encoding.ASCII.GetBytes($"{user}:{password}"));
+    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",base64String);
+    
+    Console.Write("請輸入欲進行的動作> 1:查詢 2:註冊 3:刪除 4:更新 (填數字即可) :");
+    string option = Console.ReadLine();
+
+    if (option == "1")
+    {
+        Console.Write("輸入查詢的client名稱:");
+        var clinetname = Console.ReadLine();
+        PNRurl = PNRurl + "/" + clinetname;
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri(PNRurl),
+        };
+
+        using (var response = await client.SendAsync(request))
+        {
+            response.EnsureSuccessStatusCode();
+            // Console.Write(response.EnsureSuccessStatusCode());
+            string result = await response.Content.ReadAsStringAsync();
+            Console.Write(result);
+        }
+    }
+    else if (option == "2" )
+    {
+        Console.Write("請輸入Client名稱 :");
+        string C1 = Console.ReadLine();
+        Console.Write("請輸入Client 保留IP :");
+        string ipaddress = Console.ReadLine();
+        string CN = "{\"name\": \"" +C1+ "\",\"reservedAddresses\": {\"stringItem\" : \"" + ipaddress + "\"}}";
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Post,
+            RequestUri = new Uri(PNRurl),
+            Headers =
+            {
+                { "user-agent", "vscode-restclient" },
+                { "accept", "*/*" },
+            },
+            Content = new StringContent(CN)
+            {
+                Headers =
+                {
+                    ContentType = new MediaTypeHeaderValue("application/json")
+                }
+            }
+        };
+        using (var response = await client.SendAsync(request))
+        {
+            response.EnsureSuccessStatusCode();
+            // Console.Write(response.EnsureSuccessStatusCode());
+        }
+    }
+    else if (option == "3")
+    {
+        Console.Write("請輸入要刪除的Client名稱 :");
+        string clinetname = Console.ReadLine();
+        PNRurl = PNRurl + "/" + clinetname;
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Delete,
+            RequestUri = new Uri(PNRurl),
+        };
+        using (var response = await client.SendAsync(request))
+        {
+        }
+    }
+    else
+    {
+        Console.Write("請輸入要修改的Client名稱 :");
+        string C1 = Console.ReadLine();
+        Console.Write("請輸入要修改的Client 保留IP :");
+        string ipaddress = Console.ReadLine();
+        string CN = "{\"name\": \"" +C1+ "\",\"reservedAddresses\": {\"stringItem\" : \"" + ipaddress + "\"}}";
+        PNRurl = PNRurl + "/" + C1;
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Put,
+            RequestUri = new Uri(PNRurl),
+            Headers =
+            {
+                { "user-agent", "vscode-restclient" },
+                { "accept", "*/*" },
+            },
+            Content = new StringContent(CN)
+            {
+                Headers =
+                {
+                    ContentType = new MediaTypeHeaderValue("application/json")
+                }
+            }
+        };
+        using (var response = await client.SendAsync(request)){}
+    }
+}
